@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+     margin: 0;
+     background-color: #0B0813;
+     color: #ffffff;
+     font-family: 'Inter', sans-serif;
+     overflow-x: hidden;
+   }
+
+   .glass-panel {
+     background: rgba(25, 18, 46, 0.45);
+     backdrop-filter: blur(16px);
+     -webkit-backdrop-filter: blur(16px);
+     border: 1px solid rgba(212, 175, 55, 0.15);
+     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+   }
+
+   .gold-glow-text {
+     text-shadow: 0 0 12px rgba(212, 175, 55, 0.6);
+   }
