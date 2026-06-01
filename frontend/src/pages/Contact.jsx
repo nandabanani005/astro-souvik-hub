@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 
 export default function Contact() {
+  // 🌐 CHANGE THIS LINK TO YOUR LIVE BACKEND SERVER ADDRESS:
+  // For LocalTunnel use: "https://your-tunnel-id.localtunnel.me"
+  // For Render use: "https://astro-backend.onrender.com"
+ const BACKEND_API_URL = "https://e18d1fe5b57b6311-152-59-166-174.serveousercontent.com";
   const WHATSAPP_NUMBER = "918535879134"; 
   const INSTAGRAM_HANDLE = "astrosouvik_official"; 
   const FACEBOOK_HANDLE = "astrosouvik.astrology"; 
@@ -9,7 +13,7 @@ export default function Contact() {
 
   // Premium UI State Monitors
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState(null); // { success: true/false, message: "" }
+  const [submitStatus, setSubmitStatus] = useState(null); 
 
   // Form Processing Engine
   const handleMessageSubmit = async (e) => {
@@ -24,7 +28,8 @@ export default function Contact() {
     };
 
     try {
-      const response = await fetch('/api/contact', {
+      // ✅ FIX: Pointing directly to the active full-stack backend URL
+      const response = await fetch(`${BACKEND_API_URL}/api/contact`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json'
@@ -77,7 +82,7 @@ export default function Contact() {
             <div>
               <h3 className="text-xl font-bold text-white mb-2 font-serif">চেম্বার ও কার্যালয়</h3>
               <p className="text-gray-400 text-sm leading-relaxed">
-                বুকিং করার আগে কোষ্ঠী বিচার, গ্রহের দশা বা যেকোনো প্রতিকার সংক্রান্ত বিষয়ে কোনো প্রশ্ন থাকলে নিচে দেওয়া মাধ্যমগুলির সাহায্যে সরাসরি আমাদের সাথে যোগাযোগ করতে পারেন।
+                বুকিং করার আগে কোষ্ঠী বিচার, গ্রহের dasha বা যেকোনো প্রতিকার সংক্রান্ত বিষয়ে কোনো প্রশ্ন থাকলে নিচে দেওয়া মাধ্যমগুলির সাহায্যে সরাসরি আমাদের সাথে যোগাযোগ করতে পারেন।
               </p>
             </div>
 
@@ -86,7 +91,7 @@ export default function Contact() {
                 <span className="text-xl bg-white/5 p-3 rounded-xl border border-white/5 text-yellow-400">📍</span>
                 <div>
                   <p className="text-[10px] text-gray-400 uppercase tracking-widest">প্রধান চেম্বার</p>
-                  <p className="font-medium text-base">কলকাতা, পশ্চিমবঙ্গ, ভারত</p>
+                  <p className="font-medium text-base">East Medinipur, West Bengal, India</p>
                 </div>
               </div>
 
