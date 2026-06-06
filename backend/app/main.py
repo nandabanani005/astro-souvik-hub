@@ -13,7 +13,6 @@ from fastapi.staticfiles import StaticFiles
 # ==========================================
 # ⚙️ 0. CORE RUNTIME ENVIRONMENT PATH PATCH
 # ==========================================
-# Forces Python to treat backend/app as a top-level execution path matrix
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 if CURRENT_DIR not in sys.path:
     sys.path.append(CURRENT_DIR)
@@ -29,25 +28,38 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 # --- CORS MIDDLEWARE CONFIGURATION ---
+# 🛡️ FIX 1: Explicit origins defined instead of wildcard '*' to satisfy browser credentials policies
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://astro-souvik.vercel.app",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# 🌐 FIX 2: Serveo Interception Warning Bypass Engine Middleware
+# Injects special headers to completely force-clear Serveo's interstitial browser alerts
+@app.middleware("http")
+async def add_serveo_bypass_header(request, call_next):
+    response = await call_next(request)
+    response.headers["skip-browser-warning"] = "true"
+    response.headers["Access-Control-Allow-Origin"] = "https://astro-souvik.vercel.app"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    return response
+
 # ==========================================
 # 🔌 2. LIFECYCLE ROUTER MOUNTING
 # ==========================================
-# Placed safely AFTER 'app' initialization to prevent instantiation failure!
 try:
     from routers import consultations
 except ModuleNotFoundError:
     from app.routers import consultations
 
 app.include_router(consultations.router)
-
 
 # --- DATABASE CONNECTION MAPPING SETUP ---
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:pradibanshu@localhost:5432/astro_souvik_db")
@@ -81,8 +93,8 @@ class BookingRequest(BaseModel):
 class ContactRequest(BaseModel):
     firstname: str = ""
     lastname: str = ""
-    firstName: str = ""  # 🌟 Added to catch JavaScript camelCase keys safely
-    lastName: str = ""   # 🌟 Added to catch JavaScript camelCase keys safely
+    firstName: str = ""  
+    lastName: str = ""   
     email: str
     message: str
     
@@ -98,14 +110,12 @@ class NewsRequest(BaseModel):
     category: str = "Daily Transit"
     image_url: str = ""
 
-
 # ==========================================
 # ⚙️ 4. POSTGRESQL SCHEMA ENGINE INITIALIZER
 # ==========================================
 def init_db():
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
-            # Appointments Table with dynamic Alter guard rails
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS appointments (
                     id SERIAL PRIMARY KEY,
@@ -118,19 +128,17 @@ def init_db():
                     birth_date TEXT NOT NULL,
                     birth_time TEXT NOT NULL,
                     birth_place TEXT NOT NULL,
-                    status TEXT DEFAULT 'pending', -- 🌟 STATUS ARCHIVE CONTROL MATRIX
+                    status TEXT DEFAULT 'pending',
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
             ''')
             
-            # Migration safety fallback: Adds column if your table was initialized earlier without status
             try:
                 cursor.execute("ALTER TABLE appointments ADD COLUMN status TEXT DEFAULT 'pending';")
                 conn.commit()
             except psycopg2.errors.DuplicateColumn:
                 conn.rollback()
 
-            # Consultations Table
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS consultations (
                     id SERIAL PRIMARY KEY,
@@ -142,7 +150,6 @@ def init_db():
                 );
             ''')
             
-            # Feedback Table
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS feedback (
                     id SERIAL PRIMARY KEY,
@@ -154,7 +161,6 @@ def init_db():
                 );
             ''')
             
-            # News Table
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS astrology_news (
                     id SERIAL PRIMARY KEY,
@@ -168,9 +174,7 @@ def init_db():
             conn.commit()
             print("🌟 All PostgreSQL matrix cores synchronized and deployed successfully.")
 
-# Initialize storage boundaries
 init_db()
-
 
 # ==========================================
 # 📡 5. CORE ENDPOINTS & CORE LOGIC
@@ -193,7 +197,6 @@ async def create_booking(data: BookingRequest):
                 ''', (data.client_name, data.client_phone, data.client_email, data.consultation_type, data.appointment_date, data.appointment_time, data.birth_date, data.birth_time, data.birth_place))
                 conn.commit()
                 
-        # 🌟 FIXED: Added Live Telegram Notification pipeline for Bookings!
         try:
             notification_message = (
                 "🔮 *NEW APPOINTMENT BOOKED!* 🔮\n\n"
@@ -228,15 +231,11 @@ async def get_all_bookings():
     try:
         with get_db_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-                # 🌟 UPDATED: Filter query string to show ONLY 'pending' sessions in dashboard
                 cursor.execute("SELECT * FROM appointments WHERE status = 'pending' ORDER BY id DESC;")
                 return cursor.fetchall()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# ------------------------------------------
-# 🧹 ARCHIVE SYSTEM: COMPLETE AN ACTIVE APPOINTMENT ROW
-# ------------------------------------------
 @app.put("/api/booking/{booking_id}/complete", status_code=status.HTTP_200_OK)
 async def complete_booking_session(booking_id: int):
     try:
@@ -258,7 +257,6 @@ async def complete_booking_session(booking_id: int):
 @app.post("/api/contact", status_code=status.HTTP_201_CREATED)
 async def create_contact_inquiry(data: ContactRequest):
     try:
-        # Resolve which format the frontend used to avoid blank values
         final_first = data.firstname if data.firstname else data.firstName
         final_last = data.lastname if data.lastname else data.lastName
         
@@ -270,7 +268,6 @@ async def create_contact_inquiry(data: ContactRequest):
                 ''', (final_first, final_last, data.email, data.message))
                 conn.commit()
                 
-        # 🔔 Telegram Notification Pipeline (🌟 Fixed circular import by using global file keys)
         try:
             notification_message = (
                 "✉️ *NEW GENERAL INQUIRY RECEIVED!* ✉️\n\n"
@@ -387,4 +384,4 @@ async def view_public_news():
 # ==========================================
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("app.main:app", host="127.0.0.1", port=8000, reload=True)
