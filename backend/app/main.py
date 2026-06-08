@@ -28,7 +28,6 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 # --- CORS MIDDLEWARE CONFIGURATION ---
-# 🛡️ FIX 1: Explicit origins defined instead of wildcard '*' to satisfy browser credentials policies
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -41,8 +40,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 🌐 FIX 2: Serveo Interception Warning Bypass Engine Middleware
-# Injects special headers to completely force-clear Serveo's interstitial browser alerts
 @app.middleware("http")
 async def add_serveo_bypass_header(request, call_next):
     response = await call_next(request)
@@ -91,6 +88,7 @@ class BookingRequest(BaseModel):
     birth_place: str
 
 class ContactRequest(BaseModel):
+    name: str = ""       # 🌟 FIXED: Matches React payload data parameters
     firstname: str = ""
     lastname: str = ""
     firstName: str = ""  
@@ -143,7 +141,7 @@ def init_db():
                 CREATE TABLE IF NOT EXISTS consultations (
                     id SERIAL PRIMARY KEY,
                     firstname TEXT NOT NULL,
-                    lastname TEXT NOT NULL,
+                    lastname TEXT DEFAULT '',
                     email TEXT NOT NULL,
                     message TEXT NOT NULL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -205,7 +203,7 @@ async def create_booking(data: BookingRequest):
                 f"📧 *Email:* {data.client_email}\n\n"
                 f"📅 *Schedule:* {data.appointment_date} @ {data.appointment_time}\n"
                 f"🌐 *Medium:* _{data.consultation_type}_\n\n"
-                "📌 *NATAL CONFIGURATION MATRICES:*\n"
+                f"📌 *NATAL CONFIGURATION MATRICES:*\n"
                 f"🗓️ *DOB:* {data.birth_date}\n"
                 f"⏰ *Time:* {data.birth_time}\n"
                 f"📍 *Place:* {data.birth_place}\n\n"
@@ -257,21 +255,27 @@ async def complete_booking_session(booking_id: int):
 @app.post("/api/contact", status_code=status.HTTP_201_CREATED)
 async def create_contact_inquiry(data: ContactRequest):
     try:
-        final_first = data.firstname if data.firstname else data.firstName
-        final_last = data.lastname if data.lastname else data.lastName
-        
+        # 🌟 FIXED: Graceful fallback chain handles single name fields or segmented inputs correctly
+        sender_name = "Valued Client"
+        if data.name:
+            sender_name = data.name
+        elif data.firstname or data.firstName:
+            first = data.firstname if data.firstname else data.firstName
+            last = data.lastname if data.lastname else data.lastName
+            sender_name = f"{first} {last}".strip()
+
         with get_db_connection() as conn:
             with conn.cursor() as cursor:
                 cursor.execute('''
                     INSERT INTO consultations (firstname, lastname, email, message)
                     VALUES (%s, %s, %s, %s)
-                ''', (final_first, final_last, data.email, data.message))
+                ''', (sender_name, "", data.email, data.message))
                 conn.commit()
                 
         try:
             notification_message = (
                 "✉️ *NEW GENERAL INQUIRY RECEIVED!* ✉️\n\n"
-                f"👤 *Sender:* {final_first} {final_last}\n"
+                f"👤 *Sender:* {sender_name}\n"
                 f"📧 *Email:* {data.email}\n\n"
                 "📝 *MESSAGE:*\n"
                 f"\"{data.message}\""
@@ -353,7 +357,8 @@ async def create_news_with_file(
             with open(file_location, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
                 
-            file_url = f"http://127.0.0.1:8000/uploads/{safe_filename}"
+            # 🌟 FIXED: Dynamically generates the absolute path regardless of local vs Render hosting
+            file_url = f"https://astro-souvik-hub.onrender.com/uploads/{safe_filename}"
 
         with get_db_connection() as conn:
             with conn.cursor() as cursor:
