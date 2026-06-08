@@ -9,6 +9,9 @@ export default function Feedback() {
   const [isLoading, setIsLoading] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState(null);
 
+  // 🌐 PRODUCTION LIVE SERVER ROUTING ADDRESS:
+  const BACKEND_API_URL = "https://astro-souvik-hub.onrender.com";
+
   // Quick preset performance tags (Zomato-style review shortcuts)
   const quickTags = [
     'Accurate Prediction',
@@ -45,7 +48,8 @@ export default function Feedback() {
     };
 
     try {
-      const response = await fetch('/api/feedback', {
+      // ✅ FIXED: Connected to your live production backend URL path
+      const response = await fetch(`${BACKEND_API_URL}/api/feedback`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -182,4 +186,3 @@ export default function Feedback() {
     </div>
   );
 }
-// 🌟 MAKE SURE THIS EXACT LINE IS AT THE VERY BOTTOM OF YOUR FEEDBACK.JSX FILE

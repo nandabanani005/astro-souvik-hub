@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
 
 export default function Contact() {
-  // 🌐 CHANGE THIS LINK TO YOUR LIVE BACKEND SERVER ADDRESS:
-  // For LocalTunnel use: "https://your-tunnel-id.localtunnel.me"
-  // For Render use: "https://astro-backend.onrender.com"
- const BACKEND_API_URL = "https://e18d1fe5b57b6311-152-59-166-174.serveousercontent.com";
+  // 🌐 PRODUCTION LIVE SERVER ROUTING ADDRESS:
+  const BACKEND_API_URL = "https://astro-souvik-hub.onrender.com";
+  
   const WHATSAPP_NUMBER = "918535879134"; 
   const INSTAGRAM_HANDLE = "astrosouvik_official"; 
   const FACEBOOK_HANDLE = "astrosouvik.astrology"; 
   const DISPLAY_PHONE = "+91 85358 79134";
-  const BUSINESS_EMAIL = "contact@astrosouvik.com";
+  const BUSINESS_EMAIL = "Astrologersouvik369@gmail.com";
 
   // Premium UI State Monitors
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,7 +27,7 @@ export default function Contact() {
     };
 
     try {
-      // ✅ FIX: Pointing directly to the active full-stack backend URL
+      // ✅ FIXED: Configured to target your permanent live Render cloud instance
       const response = await fetch(`${BACKEND_API_URL}/api/contact`, {
         method: 'POST',
         headers: { 
@@ -91,7 +90,7 @@ export default function Contact() {
                 <span className="text-xl bg-white/5 p-3 rounded-xl border border-white/5 text-yellow-400">📍</span>
                 <div>
                   <p className="text-[10px] text-gray-400 uppercase tracking-widest">প্রধান চেম্বার</p>
-                  <p className="font-medium text-base">East Medinipur, West Bengal, India</p>
+                  <p className="font-medium text-base">Argoal, purba Medinipur, west bengal</p>
                 </div>
               </div>
 

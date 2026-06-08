@@ -17,6 +17,9 @@ export default function AdminDashboard() {
   const [newsFile, setNewsFile] = useState(null);       
   const [newsStatus, setNewsStatus] = useState('');
 
+  // 🌐 PRODUCTION LIVE SERVER ROUTING ADDRESS:
+  const BACKEND_API_URL = "https://astro-souvik-hub.onrender.com";
+
   const fetchDashboardData = async () => {
     setIsLoading(true);
     setError(null);
@@ -28,7 +31,7 @@ export default function AdminDashboard() {
 
       // 1. Session Bookings Fetch
       try {
-        const bookingsRes = await fetch('http://127.0.0.1:8000/api/all-bookings');
+        const bookingsRes = await fetch(`${BACKEND_API_URL}/api/all-bookings`);
         if (bookingsRes.ok) bookingsData = await bookingsRes.json();
       } catch (err) {
         console.error("Failed to parse booking records:", err);
@@ -36,7 +39,7 @@ export default function AdminDashboard() {
 
       // 2. General Contact Inquiries Fetch
       try {
-        const messagesRes = await fetch('http://127.0.0.1:8000/api/consultations');
+        const messagesRes = await fetch(`${BACKEND_API_URL}/api/consultations`);
         if (messagesRes.ok) messagesData = await messagesRes.json();
       } catch (err) {
         console.error("Failed to parse consultation records:", err);
@@ -44,7 +47,7 @@ export default function AdminDashboard() {
 
       // 3. Client Testimonials Fetch
       try {
-        const feedbackRes = await fetch('http://127.0.0.1:8000/api/all-feedback');
+        const feedbackRes = await fetch(`${BACKEND_API_URL}/api/all-feedback`);
         if (feedbackRes.ok) feedbackData = await feedbackRes.json();
       } catch (err) {
         console.error("Failed to fetch customer reviews:", err);
@@ -70,7 +73,7 @@ export default function AdminDashboard() {
   // ==========================================
   const handleCompleteSession = async (bookingId) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/booking/${bookingId}/complete`, {
+      const response = await fetch(`${BACKEND_API_URL}/api/booking/${bookingId}/complete`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -102,13 +105,13 @@ export default function AdminDashboard() {
         formData.append('category', newsCategory);
         formData.append('file', newsFile);
 
-        res = await fetch('http://127.0.0.1:8000/api/news-with-file', {
+        res = await fetch(`${BACKEND_API_URL}/api/news-with-file`, {
           method: 'POST',
           body: formData 
         });
       } 
       else {
-        res = await fetch('http://127.0.0.1:8000/api/news', {
+        res = await fetch(`${BACKEND_API_URL}/api/news`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -194,7 +197,6 @@ export default function AdminDashboard() {
                           {b.consultation_type}
                         </span>
                         
-                        {/* 🌟 ACTION INTERACTION INTERFACE BUTTON LINK */}
                         <button 
                           onClick={() => handleCompleteSession(b.id)}
                           className="px-3 py-1 text-[11px] font-black uppercase tracking-wider bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500 hover:text-black rounded-lg transition-all duration-300"
@@ -206,17 +208,17 @@ export default function AdminDashboard() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
                       <div className="bg-white/[0.01] border border-white/5 p-3 rounded-xl">
-                        <p className="text-gray-500 font-semibold uppercase tracking-wider mb-1">Appointment Schedule</p>
+                        <p className="text-gray-400 font-semibold uppercase tracking-wider mb-1">Appointment Schedule</p>
                         <p className="text-white font-medium">📅 {b.appointment_date}</p>
                         <p className="text-gray-400 mt-0.5">⏰ {b.appointment_time}</p>
                       </div>
                       <div className="bg-white/[0.01] border border-white/5 p-3 rounded-xl">
-                        <p className="text-gray-500 font-semibold uppercase tracking-wider mb-1">Contact Relays</p>
+                        <p className="text-gray-400 font-semibold uppercase tracking-wider mb-1">Contact Relays</p>
                         <p className="text-white font-medium">📞 {b.client_phone}</p>
                         <p className="text-gray-400 mt-0.5 truncate">✉ {b.client_email}</p>
                       </div>
                       <div className="bg-white/[0.01] border border-white/5 p-3 rounded-xl sm:col-span-2">
-                        <p className="text-gray-500 font-semibold uppercase tracking-wider mb-1">Natal Birth Configuration Matrices</p>
+                        <p className="text-gray-400 font-semibold uppercase tracking-wider mb-1">Natal Birth Configuration Matrices</p>
                         <div className="grid grid-cols-3 gap-2 mt-1 font-mono text-gray-300">
                           <p>👶 DOB: <span className="text-yellow-400">{b.birth_date}</span></p>
                           <p>⏳ TOB: <span className="text-yellow-400">{b.birth_time}</span></p>
@@ -306,7 +308,6 @@ export default function AdminDashboard() {
                     <input type="text" value={newsTitle} onChange={(e) => setNewsTitle(e.target.value)} placeholder="e.g., আজ রাহু পরিবর্তন: ১২টি রাশির ওপর প্রভাব বিচার..." className="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-yellow-500" required />
                   </div>
 
-                  {/* 📷 ADVANCED SOURCE OPTION A: NATIVE DEVICE EXPLORER GALLERY UPLOADER */}
                   <div>
                     <label className="block text-[10px] uppercase font-bold tracking-wider text-amber-400 mb-1.5">
                       Source A: Select Poster Image File from device Gallery
@@ -339,7 +340,6 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  {/* 🌐 SOURCE OPTION B: WEB IMAGE LINK ALTERNATE FALLBACK BOX */}
                   {!newsFile && (
                     <div>
                       <div className="flex items-center gap-1 mb-1">
