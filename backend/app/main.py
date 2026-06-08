@@ -88,7 +88,7 @@ class BookingRequest(BaseModel):
     birth_place: str
 
 class ContactRequest(BaseModel):
-    name: str = ""       # 🌟 FIXED: Matches React payload data parameters
+    name: str = ""       
     firstname: str = ""
     lastname: str = ""
     firstName: str = ""  
@@ -187,12 +187,16 @@ def read_root():
 @app.post("/api/booking", status_code=status.HTTP_201_CREATED)
 async def create_booking(data: BookingRequest):
     try:
+        new_id = None
         with get_db_connection() as conn:
             with conn.cursor() as cursor:
                 cursor.execute('''
                     INSERT INTO appointments (client_name, client_phone, client_email, consultation_type, appointment_date, appointment_time, birth_date, birth_time, birth_place)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id;
                 ''', (data.client_name, data.client_phone, data.client_email, data.consultation_type, data.appointment_date, data.appointment_time, data.birth_date, data.birth_time, data.birth_place))
+                
+                new_id = cursor.fetchone()[0]
                 conn.commit()
                 
         try:
@@ -207,6 +211,7 @@ async def create_booking(data: BookingRequest):
                 f"🗓️ *DOB:* {data.birth_date}\n"
                 f"⏰ *Time:* {data.birth_time}\n"
                 f"📍 *Place:* {data.birth_place}\n\n"
+                f"🆔 *Tracking ID:* `ALIGNED-{new_id if new_id else 'NEW'}`\n\n"
                 "👉 _Verify ephemeris transitions before the session alignment starts!_"
             )
             
@@ -220,8 +225,13 @@ async def create_booking(data: BookingRequest):
         except Exception as bot_err:
             print(f"⚠️ Failed to dispatch live booking alert: {str(bot_err)}")
 
-        return {"status": "success", "message": "Planetary alignment session booked!"}
+        return {
+            "status": "success", 
+            "message": "Planetary alignment session booked!",
+            "booking_id": f"ALIGNED-{new_id}" if new_id else "ALIGNED-SECURED"
+        }
     except Exception as e:
+        print(f"❌ BACKEND BOOKING CRASH LOG: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/all-bookings")
@@ -255,7 +265,6 @@ async def complete_booking_session(booking_id: int):
 @app.post("/api/contact", status_code=status.HTTP_201_CREATED)
 async def create_contact_inquiry(data: ContactRequest):
     try:
-        # 🌟 FIXED: Graceful fallback chain handles single name fields or segmented inputs correctly
         sender_name = "Valued Client"
         if data.name:
             sender_name = data.name
@@ -357,7 +366,6 @@ async def create_news_with_file(
             with open(file_location, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
                 
-            # 🌟 FIXED: Dynamically generates the absolute path regardless of local vs Render hosting
             file_url = f"https://astro-souvik-hub.onrender.com/uploads/{safe_filename}"
 
         with get_db_connection() as conn:
