@@ -5,18 +5,15 @@ export default function News() {
   const [newsFeed, setNewsFeed] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  // 🌟 NEW: Check if the user is logged in as Admin
-  // (This looks for the role key your admin dashboard sets on login)
+  // 🌟 Check if the user is logged in as Admin
   const [isAdmin, setIsAdmin] = useState(false);
 
   const BACKEND_API_URL = "https://astro-souvik-hub.onrender.com";
 
   useEffect(() => {
-    // 🌟 Check security memory keys on page load
-    const userRole = localStorage.getItem('userRole'); // or 'isAdmin', depending on your login logic
-    const token = localStorage.getItem('token');
+    // Check security memory keys on page load
+    const userRole = localStorage.getItem('userRole'); 
     
-    // If the role is admin, flip the switch to true
     if (userRole === 'admin' || localStorage.getItem('isAdmin') === 'true') {
       setIsAdmin(true);
     }
@@ -39,12 +36,18 @@ export default function News() {
 
     try {
       const response = await fetch(`${BACKEND_API_URL}/api/news/${newsId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          // 🌟 FIXED: Added the authorization header to match your backend requirements
+          'x-admin-passcode': 'SouvikCosmicSecret2026'
+        }
       });
 
       if (response.ok) {
         alert("Post removed successfully from the cosmos!");
         setNewsFeed((prevFeed) => prevFeed.filter((post) => post.id !== newsId));
+      } else if (response.status === 403) {
+        alert("Access Denied: You do not have valid admin clearance credentials.");
       } else {
         alert("Failed to delete. Check server connection parameters.");
       }
