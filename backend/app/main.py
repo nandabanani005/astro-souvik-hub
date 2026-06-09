@@ -6,7 +6,7 @@ import requests
 from contextlib import contextmanager, asynccontextmanager
 from psycopg2.extras import RealDictCursor
 from pydantic import BaseModel
-from fastapi import FastAPI, HTTPException, status, File, UploadFile, Form
+from fastapi import FastAPI, HTTPException, status, File, UploadFile, Form, Header # 🌟 Added Header import
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -75,7 +75,7 @@ class NewsRequest(BaseModel):
 def init_db():
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
-            # ✅ FIX: Drop commands removed completely to guarantee your data is safe and never auto-deletes
+            # ✅ FIXED: DROP TABLE lines completely deleted! Your data is now saved permanently.
             print("📦 Verifying persistent production relational database schemas...")
 
             cursor.execute('''
@@ -397,9 +397,18 @@ async def view_public_news():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# --- ✨ REMOVAL ENDPOINT MATRIX ✨ ---
+# --- 🔐 SECURED REMOVAL ENDPOINT MATRIX ---
 @app.delete("/api/news/{news_id}", status_code=status.HTTP_200_OK)
-async def delete_news_post(news_id: int):
+async def delete_news_post(news_id: int, x_admin_passcode: str = Header(None)):
+    # 🌟 SECURE VALUE LOCK: Validates request validation paths
+    ADMIN_SECRET_KEY = "SouvikCosmicSecret2026"
+    
+    if x_admin_passcode != ADMIN_SECRET_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail="Security Violation: Only the verified Admin has authorization clearance."
+        )
+
     try:
         with get_db_connection() as conn:
             with conn.cursor() as cursor:
@@ -409,7 +418,9 @@ async def delete_news_post(news_id: int):
                 
                 cursor.execute("DELETE FROM astrology_news WHERE id = %s;", (news_id,))
                 conn.commit()
-        return {"status": "success", "message": f"News post {news_id} deleted successfully."}
+        return {"status": "success", "message": f"News post {news_id} deleted successfully from core clusters."}
+    except HTTPException as he:
+        raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
