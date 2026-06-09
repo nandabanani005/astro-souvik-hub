@@ -18,6 +18,9 @@ export default function BookingModal({ service, onClose }) {
   const [isLoading, setIsLoading] = useState(false);
   const [bookingResult, setBookingResult] = useState(null);
 
+  // 🌐 PRODUCTION LIVE SERVER ROUTING ADDRESS:
+  const BACKEND_API_URL = "https://astro-souvik-hub.onrender.com";
+
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -42,8 +45,8 @@ export default function BookingModal({ service, onClose }) {
     };
 
     try {
-      // 🌟 FIXED: Changed from Python '#' comment to proper JavaScript '//' comment format!
-      const response = await fetch('http://127.0.0.1:8000/api/booking', {
+      // ✅ FIXED: Changed from localhost to your live production backend URL path
+      const response = await fetch(`${BACKEND_API_URL}/api/booking`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -51,7 +54,6 @@ export default function BookingModal({ service, onClose }) {
 
       const data = await response.json();
       if (response.ok) {
-        // Since backend connection drops simple confirmation strings, we fallback safely or use timestamp
         setBookingResult({ success: true, booking_id: data.booking_id || 'ALIGNED-' + Math.floor(Math.random() * 90000 + 10000) });
       } else {
         setBookingResult({ success: false, message: data.detail || 'Internal serialization validation fail.' });
