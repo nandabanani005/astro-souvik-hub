@@ -3,7 +3,7 @@ import sys
 import shutil
 import psycopg2
 import requests
-from contextlib import contextmanager, asynccontextmanager  # 🌟 Added asynccontextmanager
+from contextlib import contextmanager, asynccontextmanager
 from psycopg2.extras import RealDictCursor
 from pydantic import BaseModel
 from fastapi import FastAPI, HTTPException, status, File, UploadFile, Form
@@ -75,7 +75,7 @@ class NewsRequest(BaseModel):
 def init_db():
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
-            # 🌟 AUTOMATED RECOVERY SCRIPT: This deletes the old corrupted layout ONCE on startup
+            # 🌟 Keep this clear script inside your startup thread to ensure your table maps properly
             print("🧼 EXECUTING CLOUD CLUSTER CLEANSE SYSTEM MATRIX...")
             cursor.execute("DROP TABLE IF EXISTS appointments CASCADE;")
             conn.commit()
@@ -137,7 +137,6 @@ def init_db():
 # ==========================================
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # This runs exactly ONCE when Render starts the container
     try:
         init_db()
     except Exception as e:
@@ -397,6 +396,22 @@ async def view_public_news():
             with conn.cursor(cursor_factory=RealDictCursor) as cursor:
                 cursor.execute("SELECT * FROM astrology_news ORDER BY id DESC;")
                 return cursor.fetchall()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# --- ✨ NEW REMOVAL ENDPOINT MATRIX ✨ ---
+@app.delete("/api/news/{news_id}", status_code=status.HTTP_200_OK)
+async def delete_news_post(news_id: int):
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT id FROM astrology_news WHERE id = %s;", (news_id,))
+                if not cursor.fetchone():
+                    raise HTTPException(status_code=404, detail="Cosmic news post not found.")
+                
+                cursor.execute("DELETE FROM astrology_news WHERE id = %s;", (news_id,))
+                conn.commit()
+        return {"status": "success", "message": f"News post {news_id} deleted successfully."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
