@@ -5,8 +5,12 @@ export default function News() {
   const [newsFeed, setNewsFeed] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // 🌐 PRODUCTION LIVE SERVER ROUTING PATH:
+  const BACKEND_API_URL = "https://astro-souvik-hub.onrender.com";
+
   useEffect(() => {
-    fetch('/api/public-news')
+    // ✅ FIXED: Pointing directly to your active live backend URL
+    fetch(`${BACKEND_API_URL}/api/public-news`)
       .then((res) => res.json())
       .then((data) => {
         setNewsFeed(data);
@@ -57,15 +61,18 @@ export default function News() {
                   </div>
                 </div>
 
-                {/* 🌟 1. OPTIONAL MAIN BANNER POSTER */}
+                {/* 🌟 1. MAIN BANNER POSTER */}
                 {post.image_url && (
                   <div className="w-full mb-6 overflow-hidden rounded-xl border border-white/10 max-h-[450px] flex items-center justify-center bg-black/40">
                     <img 
-  src={post.image_url.startsWith('http') ? post.image_url : `http://127.0.0.1:8000${post.image_url}`} 
-  alt={post.title}
-  className="w-full h-auto object-contain max-h-[440px] rounded-xl hover:scale-[1.01] transition-transform duration-500"
-  onError={(e) => { e.target.style.display = 'none'; }}
-/>
+                      src={post.image_url.startsWith('http') ? post.image_url : `${BACKEND_API_URL}${post.image_url}`} 
+                      alt={post.title}
+                      className="w-full h-auto object-contain max-h-[440px] rounded-xl hover:scale-[1.01] transition-transform duration-500"
+                      onError={(e) => { 
+                        console.error("Main Image load failed:", post.image_url);
+                        e.target.style.display = 'none'; 
+                      }}
+                    />
                   </div>
                 )}
 
@@ -85,12 +92,15 @@ export default function News() {
                       
                       return (
                         <div key={idx} className="w-full my-6 overflow-hidden rounded-xl border border-white/5 bg-black/50 flex justify-center max-h-[550px]">
-                         <img 
-  src={extractedUrl.startsWith('http') ? extractedUrl : `http://127.0.0.1:8000${extractedUrl}`} 
-  alt="Cosmic content visual" 
-  className="w-full h-auto object-contain max-h-[550px] rounded-lg shadow-md"
-  onError={(e) => { e.target.style.display = 'none'; }}
-/>
+                          <img 
+                            src={extractedUrl.startsWith('http') ? extractedUrl : `${BACKEND_API_URL}${extractedUrl}`} 
+                            alt="Cosmic content visual" 
+                            className="w-full h-auto object-contain max-h-[550px] rounded-lg shadow-md"
+                            onError={(e) => { 
+                              console.error("Inline Image load failed:", extractedUrl);
+                              e.target.style.display = 'none'; 
+                            }}
+                          />
                         </div>
                       );
                     }
