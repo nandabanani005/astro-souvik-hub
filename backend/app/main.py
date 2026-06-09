@@ -3,7 +3,7 @@ import sys
 import shutil
 import psycopg2
 import requests
-from contextlib import contextmanager
+from contextlib import contextmanager, asynccontextmanager  # 🌟 Added asynccontextmanager
 from psycopg2.extras import RealDictCursor
 from pydantic import BaseModel
 from fastapi import FastAPI, HTTPException, status, File, UploadFile, Form
@@ -18,47 +18,8 @@ if CURRENT_DIR not in sys.path:
     sys.path.append(CURRENT_DIR)
 
 # ==========================================
-# ⚙️ 1. SYSTEM INITIALIZATION & CORE SETUP
+# 🔌 DATABASE CONNECTION MAPPING SETUP
 # ==========================================
-app = FastAPI(title="Astro Souvik Master API Hub", version="2.0.0")
-
-# Setup local file storage arrays safely
-UPLOAD_DIR = os.path.join(CURRENT_DIR, "uploads")
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
-
-# --- CORS MIDDLEWARE CONFIGURATION ---
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "https://astro-souvik.vercel.app",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173"
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-@app.middleware("http")
-async def add_serveo_bypass_header(request, call_next):
-    response = await call_next(request)
-    response.headers["skip-browser-warning"] = "true"
-    response.headers["Access-Control-Allow-Origin"] = "https://astro-souvik.vercel.app"
-    response.headers["Access-Control-Allow-Credentials"] = "true"
-    return response
-
-# ==========================================
-# 🔌 2. LIFECYCLE ROUTER MOUNTING
-# ==========================================
-try:
-    from routers import consultations
-except ModuleNotFoundError:
-    from app.routers import consultations
-
-app.include_router(consultations.router)
-
-# --- DATABASE CONNECTION MAPPING SETUP ---
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:pradibanshu@localhost:5432/astro_souvik_db")
 
 # Global Telegram Configuration Matrix
@@ -74,7 +35,7 @@ def get_db_connection():
         conn.close()
 
 # ==========================================
-# 📋 3. DATA ARCHITECTURE VALIDATION (Pydantic)
+# 📋 DATA ARCHITECTURE VALIDATION (Pydantic)
 # ==========================================
 class BookingRequest(BaseModel):
     client_name: str
@@ -109,11 +70,16 @@ class NewsRequest(BaseModel):
     image_url: str = ""
 
 # ==========================================
-# ⚙️ 4. POSTGRESQL SCHEMA ENGINE INITIALIZER
+# ⚙️ POSTGRESQL SCHEMA ENGINE INITIALIZER
 # ==========================================
 def init_db():
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
+            # 🌟 AUTOMATED RECOVERY SCRIPT: This deletes the old corrupted layout ONCE on startup
+            print("🧼 EXECUTING CLOUD CLUSTER CLEANSE SYSTEM MATRIX...")
+            cursor.execute("DROP TABLE IF EXISTS appointments CASCADE;")
+            conn.commit()
+
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS appointments (
                     id SERIAL PRIMARY KEY,
@@ -130,12 +96,6 @@ def init_db():
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
             ''')
-            
-            try:
-                cursor.execute("ALTER TABLE appointments ADD COLUMN status TEXT DEFAULT 'pending';")
-                conn.commit()
-            except psycopg2.errors.DuplicateColumn:
-                conn.rollback()
 
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS consultations (
@@ -170,12 +130,61 @@ def init_db():
                 );
             ''')
             conn.commit()
-            print("🌟 All PostgreSQL matrix cores synchronized and deployed successfully.")
-
-init_db()
+            print("🌟 All PostgreSQL matrix cores synchronized successfully.")
 
 # ==========================================
-# 📡 5. CORE ENDPOINTS & CORE LOGIC
+# 🛡️ LIFESPAN MANAGER (Protects Server from 500 Deadlocks)
+# ==========================================
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # This runs exactly ONCE when Render starts the container
+    try:
+        init_db()
+    except Exception as e:
+        print(f"❌ Startup Database initialization failure: {str(e)}")
+    yield
+
+# ==========================================
+# ⚙️ SYSTEM INITIALIZATION & CORE SETUP
+# ==========================================
+app = FastAPI(title="Astro Souvik Master API Hub", version="2.0.0", lifespan=lifespan)
+
+UPLOAD_DIR = os.path.join(CURRENT_DIR, "uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://astro-souvik.vercel.app",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.middleware("http")
+async def add_serveo_bypass_header(request, call_next):
+    response = await call_next(request)
+    response.headers["skip-browser-warning"] = "true"
+    response.headers["Access-Control-Allow-Origin"] = "https://astro-souvik.vercel.app"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    return response
+
+# ==========================================
+# 🔌 LIFECYCLE ROUTER MOUNTING
+# ==========================================
+try:
+    from routers import consultations
+except ModuleNotFoundError:
+    from app.routers import consultations
+
+app.include_router(consultations.router)
+
+# ==========================================
+# 📡 CORE ENDPOINTS & CORE LOGIC
 # ==========================================
 @app.get("/")
 def read_root():
@@ -393,15 +402,8 @@ async def view_public_news():
 
 
 # ==========================================
-# 🏎️ 6. APPS SERVER EXECUTION LOOP (ALWAYS KEEP LAST)
+# 🏎️ APPS SERVER EXECUTION LOOP (ALWAYS KEEP LAST)
 # ==========================================
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app.main:app", host="127.0.0.1", port=8000, reload=True)
-
-
-
-
-
-    
-    
