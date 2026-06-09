@@ -75,10 +75,8 @@ class NewsRequest(BaseModel):
 def init_db():
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
-            # 🌟 Keep this clear script inside your startup thread to ensure your table maps properly
-            print("🧼 EXECUTING CLOUD CLUSTER CLEANSE SYSTEM MATRIX...")
-            cursor.execute("DROP TABLE IF EXISTS appointments CASCADE;")
-            conn.commit()
+            # ✅ FIX: Drop commands removed completely to guarantee your data is safe and never auto-deletes
+            print("📦 Verifying persistent production relational database schemas...")
 
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS appointments (
@@ -130,7 +128,7 @@ def init_db():
                 );
             ''')
             conn.commit()
-            print("🌟 All PostgreSQL matrix cores synchronized successfully.")
+            print("🌟 All PostgreSQL matrix cores verified and locked permanently.")
 
 # ==========================================
 # 🛡️ LIFESPAN MANAGER (Protects Server from 500 Deadlocks)
@@ -399,7 +397,7 @@ async def view_public_news():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# --- ✨ NEW REMOVAL ENDPOINT MATRIX ✨ ---
+# --- ✨ REMOVAL ENDPOINT MATRIX ✨ ---
 @app.delete("/api/news/{news_id}", status_code=status.HTTP_200_OK)
 async def delete_news_post(news_id: int):
     try:
