@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Newspaper, Calendar, Sparkles } from 'lucide-react';
+import { Newspaper, Calendar, Sparkles, Trash2 } from 'lucide-react'; // 🌟 Added Trash2 Icon
 
 export default function News() {
   const [newsFeed, setNewsFeed] = useState([]);
@@ -8,8 +8,8 @@ export default function News() {
   // 🌐 PRODUCTION LIVE SERVER ROUTING PATH:
   const BACKEND_API_URL = "https://astro-souvik-hub.onrender.com";
 
+  // Fetch all news posts from database
   useEffect(() => {
-    // ✅ FIXED: Pointing directly to your active live backend URL
     fetch(`${BACKEND_API_URL}/api/public-news`)
       .then((res) => res.json())
       .then((data) => {
@@ -21,6 +21,28 @@ export default function News() {
         setIsLoading(false);
       });
   }, []);
+
+  // 🌟 NEW: Execution loop to handle news deletion directly from the feed
+  const handleDeletePost = async (newsId) => {
+    if (!window.confirm("Are you sure you want to delete this celestial news post permanently?")) return;
+
+    try {
+      const response = await fetch(`${BACKEND_API_URL}/api/news/${newsId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        alert("Post removed successfully from the cosmos!");
+        // Instantly remove it from your screen without needing to reload
+        setNewsFeed((prevFeed) => prevFeed.filter((post) => post.id !== newsId));
+      } else {
+        alert("Failed to delete. Check server connection parameters.");
+      }
+    } catch (err) {
+      console.error("Delete operation dropped:", err);
+      alert("Network error. Could not contact backend server.");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#020105] text-white pt-24 pb-16 px-4 sm:px-8">
@@ -48,10 +70,19 @@ export default function News() {
             {newsFeed.map((post) => (
               <article 
                 key={post.id} 
-                className="group border border-white/10 bg-white/[0.01] backdrop-blur-2xl p-6 md:p-8 rounded-2xl shadow-2xl hover:border-amber-500/30 transition-all duration-300"
+                className="group relative border border-white/10 bg-white/[0.01] backdrop-blur-2xl p-6 md:p-8 rounded-2xl shadow-2xl hover:border-amber-500/30 transition-all duration-300"
               >
+                {/* 🌟 ADMIN TRASH BUTTON: Visible right on the card */}
+                <button
+                  onClick={() => handleDeletePost(post.id)}
+                  className="absolute top-6 right-6 p-2 text-gray-500 hover:text-rose-400 bg-white/5 hover:bg-rose-500/10 rounded-xl transition-all duration-200 border border-white/5 z-10"
+                  title="Delete Post permanently"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+
                 {/* META INFO ROW */}
-                <div className="flex flex-wrap justify-between items-center gap-2 mb-4 border-b border-white/5 pb-3">
+                <div className="flex flex-wrap justify-between items-center gap-2 mb-4 border-b border-white/5 pb-3 pr-8">
                   <span className="text-[10px] uppercase font-mono font-bold tracking-widest bg-amber-500/10 text-amber-400 px-3 py-1 rounded-md border border-amber-500/10">
                     ✨ {post.category}
                   </span>
@@ -61,7 +92,7 @@ export default function News() {
                   </div>
                 </div>
 
-                {/* 🌟 1. MAIN BANNER POSTER */}
+                {/* MAIN BANNER POSTER */}
                 {post.image_url && (
                   <div className="w-full mb-6 overflow-hidden rounded-xl border border-white/10 max-h-[450px] flex items-center justify-center bg-black/40">
                     <img 
@@ -81,12 +112,11 @@ export default function News() {
                   {post.title}
                 </h2>
                 
-                {/* 🌟 2. SMART CONTENT PARSER FOR INLINE TEXT IMAGES */}
+                {/* SMART CONTENT PARSER FOR INLINE TEXT IMAGES */}
                 <div className="space-y-4 text-sm sm:text-base text-gray-300 leading-relaxed font-sans">
                   {post.content.split('\n').map((block, idx) => {
                     const cleanLine = block.trim();
                     
-                    // Detect if this specific text row is an inline image wrapper [img:https://...]
                     if (cleanLine.startsWith('[img:') && cleanLine.endsWith(']')) {
                       const extractedUrl = cleanLine.replace('[img:', '').replace(']', '').trim();
                       
@@ -105,11 +135,10 @@ export default function News() {
                       );
                     }
                     
-                    // Standard text row handling
                     return cleanLine ? (
                       <p key={idx} className="whitespace-pre-wrap">{block}</p>
                     ) : (
-                      <div key={idx} className="h-2"></div> // Holds blank space when you hit enter
+                      <div key={idx} className="h-2"></div>
                     );
                   })}
                 </div>
