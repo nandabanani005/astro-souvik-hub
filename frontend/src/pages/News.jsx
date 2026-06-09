@@ -1,15 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { Newspaper, Calendar, Sparkles, Trash2 } from 'lucide-react'; // 🌟 Added Trash2 Icon
+import { Newspaper, Calendar, Sparkles, Trash2 } from 'lucide-react';
 
 export default function News() {
   const [newsFeed, setNewsFeed] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // 🌟 NEW: Check if the user is logged in as Admin
+  // (This looks for the role key your admin dashboard sets on login)
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  // 🌐 PRODUCTION LIVE SERVER ROUTING PATH:
   const BACKEND_API_URL = "https://astro-souvik-hub.onrender.com";
 
-  // Fetch all news posts from database
   useEffect(() => {
+    // 🌟 Check security memory keys on page load
+    const userRole = localStorage.getItem('userRole'); // or 'isAdmin', depending on your login logic
+    const token = localStorage.getItem('token');
+    
+    // If the role is admin, flip the switch to true
+    if (userRole === 'admin' || localStorage.getItem('isAdmin') === 'true') {
+      setIsAdmin(true);
+    }
+
+    // Fetch public posts
     fetch(`${BACKEND_API_URL}/api/public-news`)
       .then((res) => res.json())
       .then((data) => {
@@ -22,7 +34,6 @@ export default function News() {
       });
   }, []);
 
-  // 🌟 NEW: Execution loop to handle news deletion directly from the feed
   const handleDeletePost = async (newsId) => {
     if (!window.confirm("Are you sure you want to delete this celestial news post permanently?")) return;
 
@@ -33,7 +44,6 @@ export default function News() {
 
       if (response.ok) {
         alert("Post removed successfully from the cosmos!");
-        // Instantly remove it from your screen without needing to reload
         setNewsFeed((prevFeed) => prevFeed.filter((post) => post.id !== newsId));
       } else {
         alert("Failed to delete. Check server connection parameters.");
@@ -72,14 +82,16 @@ export default function News() {
                 key={post.id} 
                 className="group relative border border-white/10 bg-white/[0.01] backdrop-blur-2xl p-6 md:p-8 rounded-2xl shadow-2xl hover:border-amber-500/30 transition-all duration-300"
               >
-                {/* 🌟 ADMIN TRASH BUTTON: Visible right on the card */}
-                <button
-                  onClick={() => handleDeletePost(post.id)}
-                  className="absolute top-6 right-6 p-2 text-gray-500 hover:text-rose-400 bg-white/5 hover:bg-rose-500/10 rounded-xl transition-all duration-200 border border-white/5 z-10"
-                  title="Delete Post permanently"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {/* 🌟 FIXED ADMIN TRASH BUTTON: Only renders if isAdmin is TRUE */}
+                {isAdmin && (
+                  <button
+                    onClick={() => handleDeletePost(post.id)}
+                    className="absolute top-6 right-6 p-2 text-gray-400 hover:text-rose-400 bg-white/5 hover:bg-rose-500/10 rounded-xl transition-all duration-200 border border-white/5 z-10"
+                    title="Delete Post permanently"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
 
                 {/* META INFO ROW */}
                 <div className="flex flex-wrap justify-between items-center gap-2 mb-4 border-b border-white/5 pb-3 pr-8">
@@ -100,7 +112,6 @@ export default function News() {
                       alt={post.title}
                       className="w-full h-auto object-contain max-h-[440px] rounded-xl hover:scale-[1.01] transition-transform duration-500"
                       onError={(e) => { 
-                        console.error("Main Image load failed:", post.image_url);
                         e.target.style.display = 'none'; 
                       }}
                     />
@@ -127,7 +138,6 @@ export default function News() {
                             alt="Cosmic content visual" 
                             className="w-full h-auto object-contain max-h-[550px] rounded-lg shadow-md"
                             onError={(e) => { 
-                              console.error("Inline Image load failed:", extractedUrl);
                               e.target.style.display = 'none'; 
                             }}
                           />
